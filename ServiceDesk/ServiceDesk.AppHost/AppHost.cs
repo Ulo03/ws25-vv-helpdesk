@@ -1,6 +1,11 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var database = builder.AddPostgres("postgres");
+var postgresPassword = builder.AddParameter("postgres-password", secret: true);
+
+var postgres = builder.AddPostgres("postgres", password: postgresPassword)
+    .WithEndpoint(port: 52748, targetPort: 5432, name: "postgres");
+
+var database = postgres.AddDatabase("servicedesk");
 
 var apiService = builder.AddProject<Projects.ServiceDesk_ApiService>("servicedesk-apiservice")
     .WithReference(database)

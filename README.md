@@ -35,6 +35,26 @@ Ein Mini-ServiceDesk zur Verwaltung von Support-Tickets und einer Knowledge-Base
 - **Datenbank:** Relationale Datenbank (Docker-Container mit Volumes für Persistenz).
 - **Sicherheit:** Datenbank ist nur intern erreichbar, Zugriff erfolgt ausschließlich über die Web-App.
 
+## Datenbank-Migrationen
+
+Um die Datenbankschema-Änderungen auf die Datenbank anzuwenden, werden Entity Framework Core Migrationen verwendet:
+
+### Migration erstellen
+```bash
+cd ServiceDesk/ServiceDesk.Data
+dotnet ef migrations add <MigrationName>
+```
+
+### Migration auf die Datenbank anwenden
+```bash
+cd ServiceDesk/ServiceDesk.Data
+dotnet ef database update
+```
+
+**Hinweis:** Die PostgreSQL-Datenbank muss vor der Anwendung von Migrationen gestartet sein. Hierfür gibt es zwei Möglichkeiten:
+- Docker-Container manuell starten
+- Wechseln in `ServiceDesk.AppHost` und Aspire mit `dotnet run` ausführen.
+
 ## Git & CI/CD (GitLab)
 - **Workflow:** Feature-Branches und Merge Requests.
 - **Pipeline-Stages:**
