@@ -1,0 +1,35 @@
+Table users {
+  id uuid [pk]
+  username varchar [unique, not null]
+  password_hash varchar [not null]
+  role varchar [not null, note: 'Admin, User']
+  created_at timestamp [default: `now()`]
+}
+
+Table tickets {
+  id uuid [pk]
+  title varchar [not null]
+  description text
+  status varchar [not null, note: 'Open, In Progress, Done']
+  created_by_id uuid [ref: > users.id]
+  assigned_to_id uuid [ref: > users.id, null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table comments {
+  id uuid [pk]
+  ticket_id uuid [ref: > tickets.id]
+  author_id uuid [ref: > users.id]
+  content text [not null]
+  created_at timestamp [default: `now()`]
+}
+
+Table articles {
+  id uuid [pk]
+  title varchar [not null]
+  content text [not null]
+  author_id uuid [ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
