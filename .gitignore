@@ -46,6 +46,7 @@ CodeCoverage/
 
 .idea/
 .vscode/
+.vs/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
