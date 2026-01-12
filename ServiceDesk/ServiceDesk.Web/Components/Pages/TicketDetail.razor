@@ -5,6 +5,25 @@
 
 <PageTitle>Ticket</PageTitle>
 
+<div class="mt-3">
+    <div class="fw-semibold">Description</div>
+    <div class="text-muted" style="white-space:pre-wrap">@ticket?.Description</div>
+</div>
+
+<div class="mt-3">
+    <label class="form-label fw-semibold">Status</label>
+    <select class="form-select" value="@ticket?.Status" @onchange="OnStatusChangedAsync">
+        <option value="@TicketStatus.Open">Open</option>
+        <option value="@TicketStatus.InProgress">In Progress</option>
+        <option value="@TicketStatus.Done">Done</option>
+    </select>
+
+    @if (statusError is not null)
+    {
+        <div class="alert alert-danger mt-2">@statusError</div>
+    }
+</div>
+
 @if (loadError is not null)
 {
     <div class="alert alert-danger" role="alert">@loadError</div>
@@ -74,6 +93,34 @@ else
     string? submitError;
 
     NewCommentModel newComment = new();
+
+    string? statusError;
+
+    async Task OnStatusChangedAsync(ChangeEventArgs e)
+    {
+        if (ticket is null) return;
+
+        statusError = null;
+
+        if (!Enum.TryParse<TicketStatus>(e.Value?.ToString(), out var newStatus))
+        {
+            statusError = "Invalid status.";
+            return;
+        }
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await TicketClient.UpdateStatusAsync(ticket.Id, new UpdateTicketStatusDto(newStatus), cts.Token);
+
+            ticket = await TicketClient.GetTicketAsync(ticket.Id, cts.Token);
+        }
+        catch (Exception ex)
+        {
+            statusError = ex.Message;
+        }
+    }
+
 
     protected override async Task OnParametersSetAsync()
     {
