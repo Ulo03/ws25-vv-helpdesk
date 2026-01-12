@@ -15,11 +15,11 @@ public sealed record KnowledgeArticleDetailDto(
     IReadOnlyList<string> Tags);
 
 public sealed record NewKnowledgeArticleDto(
-    string Title, 
-    string Body, 
+    string Title,
+    string Body,
     IReadOnlyList<string> Tags);
 
 public sealed record UpdateKnowledgeArticleDto(
-    string Title, 
-    string Body, 
+    string Title,
+    string Body,
     IReadOnlyList<string> Tags);

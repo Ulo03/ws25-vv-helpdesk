@@ -1,15 +1,15 @@
 ﻿namespace ServiceDesk.Web.Models;
 
 public sealed record TicketSummaryDto(
-    int Id, 
-    string Title, 
-    TicketStatus Status, 
+    int Id,
+    string Title,
+    TicketStatus Status,
     DateTimeOffset UpdatedAt);
 
 public sealed record TicketCommentDto(
-    int Id, 
-    string Author, 
-    string Message, 
+    int Id,
+    string Author,
+    string Message,
     DateTimeOffset CreatedAt);
 
 public sealed record TicketDetailDto(
