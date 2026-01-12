@@ -47,7 +47,7 @@ jobs:
               run: dotnet restore ServiceDesk/ServiceDesk.slnx
 
             - name: Lint
-              run: dotnet format ServiceDesk/ServiceDesk.slnx --check
+              run: dotnet format ServiceDesk/ServiceDesk.slnx --verify-no-changes --severity info
 
             - name: Build
               run: dotnet build ServiceDesk/ServiceDesk.slnx --configuration Release --no-restore
