@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ServiceDesk.Contracts\ServiceDesk.Contracts.csproj" />
       <ProjectReference Include="..\ServiceDesk.ServiceDefaults\ServiceDesk.ServiceDefaults.csproj" />
       <ProjectReference Include="..\ServiceDesk.Data\ServiceDesk.Data.csproj" />
     </ItemGroup>

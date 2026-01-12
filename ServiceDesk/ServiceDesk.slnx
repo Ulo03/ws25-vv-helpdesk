@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="ServiceDesk.ApiService/ServiceDesk.ApiService.csproj" />
   <Project Path="ServiceDesk.AppHost/ServiceDesk.AppHost.csproj" />
+  <Project Path="ServiceDesk.Contracts/ServiceDesk.Contracts.csproj" Id="5bfbfe3e-508f-412e-9190-022ec85726b7" />
   <Project Path="ServiceDesk.Data/ServiceDesk.Data.csproj" />
   <Project Path="ServiceDesk.ServiceDefaults/ServiceDesk.ServiceDefaults.csproj" />
   <Project Path="ServiceDesk.Web/ServiceDesk.Web.csproj" />
