@@ -11,7 +11,7 @@ public class Ticket
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    public User CreatedBy { get; set; } = null!;
+    public required User CreatedBy { get; set; }
     public User? AssignedTo { get; set; }
-    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public ICollection<Comment> Comments { get; set; } = [];
 }

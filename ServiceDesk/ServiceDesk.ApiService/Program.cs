@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Add PostgreSQL DbContext
+// Add SQLServer DbContext
 builder.AddSqlServerDbContext<ServiceDeskDbContext>("servicedesk");
 var app = builder.Build();
 

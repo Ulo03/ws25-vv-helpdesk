@@ -9,5 +9,5 @@ public class Article
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    public User Author { get; set; } = null!;
+    public required User Author { get; set; }
 }

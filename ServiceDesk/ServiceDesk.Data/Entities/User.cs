@@ -8,8 +8,8 @@ public class User
     public string Role { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 
-    public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();
-    public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
-    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-    public ICollection<Article> Articles { get; set; } = new List<Article>();
+    public ICollection<Ticket> CreatedTickets { get; set; } = [];
+    public ICollection<Ticket> AssignedTickets { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
+    public ICollection<Article> Articles { get; set; } = [];
 }
