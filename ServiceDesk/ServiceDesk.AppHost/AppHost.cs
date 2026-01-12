@@ -1,15 +1,13 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgresPassword = builder.AddParameter("postgres-password", secret: true);
-
-var postgres = builder.AddPostgres("postgres", password: postgresPassword)
-    .WithEndpoint(port: 52748, targetPort: 5432, name: "postgres");
-
-var database = postgres.AddDatabase("servicedesk");
+var sql = builder.AddSqlServer("sql")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithDataVolume()
+    .AddDatabase("servicedesk");
 
 var apiService = builder.AddProject<Projects.ServiceDesk_ApiService>("servicedesk-apiservice")
-    .WithReference(database)
-    .WaitFor(database);
+    .WithReference(sql)
+    .WaitFor(sql);
 
 builder.AddProject<Projects.ServiceDesk_Web>("servicedesk-web")
     .WithExternalHttpEndpoints()
