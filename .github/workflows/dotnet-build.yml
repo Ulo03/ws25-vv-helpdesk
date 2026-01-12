@@ -24,12 +24,12 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: ".0.x"
 
       # 3. Restore NuGet packages
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ServiceDesk/ServiceDesk.slnx
 
       # 4. Build
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ServiceDesk/ServiceDesk.slnx --configuration Release --no-restore
