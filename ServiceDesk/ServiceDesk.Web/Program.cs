@@ -1,4 +1,5 @@
 using ServiceDesk.Web.Components;
+using ServiceDesk.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,16 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// UI Data clients (TODO: Patrick: Change from InMemnory to API calls)
+builder.Services.AddScoped<ITicketClient, InMemoryTicketClient>();
+builder.Services.AddScoped<IKnowledgeClient, InMemoryKnowledgeClient>();
+
+// Health Check via Aspire Service Discovery
+builder.Services.AddHttpClient<IHealthClient, ApiHealthClient>(client =>
+{
+    client.BaseAddress = new Uri("https+http://servicedesk-apiservice");
+});
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
@@ -16,7 +27,6 @@ app.MapDefaultEndpoints();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

@@ -1,0 +1,82 @@
+﻿@page "/tickets"
+@using ServiceDesk.Web.Models
+@inject ITicketClient TicketClient
+@inject NavigationManager Nav
+
+<PageTitle>Tickets</PageTitle>
+
+<h1 class="mb-3">Tickets</h1>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Search title…" @bind="search" @bind:event="oninput" />
+</div>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger" role="alert">@loadError</div>
+}
+else if (tickets is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    @TicketGroup("Open", TicketStatus.Open, openByDefault: true)
+    @TicketGroup("In Progress", TicketStatus.InProgress, openByDefault: true)
+    @TicketGroup("Done", TicketStatus.Done, openByDefault: false)
+}
+
+@code {
+    IReadOnlyList<TicketSummaryDto>? tickets;
+    string? loadError;
+    string search = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            tickets = await TicketClient.GetTicketsAsync(cts.Token);
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+    }
+
+    IEnumerable<TicketSummaryDto> Filtered(TicketStatus status) =>
+        (tickets ?? Array.Empty<TicketSummaryDto>())
+            .Where(t => t.Status == status)
+            .Where(t => string.IsNullOrWhiteSpace(search) || t.Title.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(t => t.UpdatedAt);
+
+    RenderFragment TicketGroup(string title, TicketStatus status, bool openByDefault) => @<details class="mb-3" open="@openByDefault">
+        <summary class="h5">
+            @title <span class="text-muted">(@Filtered(status).Count())</span>
+        </summary>
+
+        <div class="table-responsive mt-2">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">Id</th>
+                        <th>Title</th>
+                        <th style="width:220px;">Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Filtered(status))
+                    {
+                        var url = $"/tickets/{t.Id}";
+
+                        <tr style="cursor:pointer;" @onclick="() => Nav.NavigateTo(url)">
+                            <td>@t.Id</td>
+                            <td>@t.Title</td>
+                            <td>@t.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </details>;
+}

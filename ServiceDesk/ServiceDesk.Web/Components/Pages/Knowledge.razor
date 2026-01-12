@@ -1,0 +1,50 @@
+﻿@page "/knowledge"
+@using ServiceDesk.Web.Models
+@inject IKnowledgeClient KnowledgeClient
+
+<PageTitle>Knowledge Base</PageTitle>
+
+<h1 class="mb-3">Knowledge Base</h1>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger" role="alert">@loadError</div>
+}
+else if (articles is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    @foreach (var a in articles.OrderByDescending(a => a.UpdatedAt))
+    {
+        <details class="card mb-2">
+            <summary class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">@a.Title</span>
+                <span class="text-muted small">@a.UpdatedAt.ToString("yyyy-MM-dd")</span>
+            </summary>
+            <div class="card-body">
+                <div class="text-muted small mb-2">Tags: @(a.Tags.Count == 0 ? "-" : string.Join(", ", a.Tags))</div>
+                <div style="white-space:pre-wrap">@a.Preview</div>
+            </div>
+        </details>
+    }
+}
+
+@code {
+    IReadOnlyList<KnowledgeArticleSummaryDto>? articles;
+    string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            articles = await KnowledgeClient.GetArticlesAsync(cts.Token);
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+    }
+}

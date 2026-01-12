@@ -1,0 +1,128 @@
+﻿@page "/tickets/{Id:int}"
+@using System.ComponentModel.DataAnnotations
+@using ServiceDesk.Web.Models
+@inject ITicketClient TicketClient
+
+<PageTitle>Ticket</PageTitle>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger" role="alert">@loadError</div>
+}
+else if (ticket is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    <div class="d-flex align-items-start justify-content-between gap-3">
+        <div>
+            <h1 class="mb-1">#@ticket.Id – @ticket.Title</h1>
+            <div class="text-muted">
+                Status: <span class="fw-semibold">@ticket.Status</span> · Updated: @ticket.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <h3 class="mb-3">Comments</h3>
+
+    @if (ticket.Comments.Count == 0)
+    {
+        <div class="text-muted">No comments yet.</div>
+    }
+    else
+    {
+        <div class="list-group mb-4">
+            @foreach (var c in ticket.Comments.OrderByDescending(c => c.CreatedAt))
+            {
+                <div class="list-group-item">
+                    <div class="small text-muted">@c.Author · @c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div style="white-space:pre-wrap">@c.Message</div>
+                </div>
+            }
+        </div>
+    }
+
+    <h3 class="mb-3">Add comment</h3>
+    <EditForm Model="newComment" OnValidSubmit="AddCommentAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Message</label>
+            <InputTextArea class="form-control" @bind-Value="newComment.Message" rows="4" />
+        </div>
+
+        <button class="btn btn-primary" disabled="@isSubmitting">Submit</button>
+    </EditForm>
+
+    @if (submitError is not null)
+    {
+        <div class="alert alert-danger mt-3" role="alert">@submitError</div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    TicketDetailDto? ticket;
+    string? loadError;
+
+    bool isSubmitting;
+    string? submitError;
+
+    NewCommentModel newComment = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            submitError = null;
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            ticket = await TicketClient.GetTicketAsync(Id, cts.Token);
+            if (ticket is null)
+            {
+                loadError = $"Ticket {Id} not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+    }
+
+    async Task AddCommentAsync()
+    {
+        if (ticket is null) return;
+
+        isSubmitting = true;
+        submitError = null;
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await TicketClient.AddCommentAsync(ticket.Id, new NewCommentDto(newComment.Message), cts.Token);
+
+            newComment = new();
+            ticket = await TicketClient.GetTicketAsync(Id, cts.Token);
+        }
+        catch (Exception ex)
+        {
+            submitError = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    sealed class NewCommentModel
+    {
+        [Required]
+        [MinLength(2)]
+        [MaxLength(2000)]
+        public string Message { get; set; } = string.Empty;
+    }
+}

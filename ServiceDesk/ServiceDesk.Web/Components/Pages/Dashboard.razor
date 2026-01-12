@@ -1,0 +1,114 @@
+﻿@page "/"
+@using ServiceDesk.Web.Models
+@inject ITicketClient TicketClient
+@inject IKnowledgeClient KnowledgeClient
+@inject IHealthClient HealthClient
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1 class="mb-4">Dashboard</h1>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @loadError
+    </div>
+}
+else if (stats is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fw-semibold">Open</div>
+                    <div class="display-6">@stats.OpenTickets</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fw-semibold">In Progress</div>
+                    <div class="display-6">@stats.InProgressTickets</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fw-semibold">Done</div>
+                    <div class="display-6">@stats.DoneTickets</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fw-semibold">Knowledge Articles</div>
+                    <div class="display-6">@stats.Articles</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+                <div class="fw-semibold">API Health</div>
+                <div class="text-muted small">Last check: @stats.HealthCheckedAtLocal</div>
+            </div>
+            <span class="badge @(stats.ApiHealthy ? "text-bg-success" : "text-bg-danger")">
+                @(stats.ApiHealthy ? "Healthy" : "Unhealthy")
+            </span>
+        </div>
+    </div>
+}
+
+@code {
+    DashboardStatsViewModel? stats;
+    string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            var ticketsTask = TicketClient.GetTicketsAsync(cts.Token);
+            var articlesTask = KnowledgeClient.GetArticlesAsync(cts.Token);
+            var healthTask = HealthClient.IsApiHealthyAsync(cts.Token);
+
+            await Task.WhenAll(ticketsTask, articlesTask, healthTask);
+
+            var tickets = ticketsTask.Result;
+            var articles = articlesTask.Result;
+
+            stats = new DashboardStatsViewModel(
+                OpenTickets: tickets.Count(t => t.Status == TicketStatus.Open),
+                InProgressTickets: tickets.Count(t => t.Status == TicketStatus.InProgress),
+                DoneTickets: tickets.Count(t => t.Status == TicketStatus.Done),
+                Articles: articles.Count,
+                ApiHealthy: healthTask.Result,
+                HealthCheckedAtLocal: DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        }
+        catch (Exception ex)
+        {
+            loadError = $"Failed to load dashboard data: {ex.Message}";
+        }
+    }
+
+    sealed record DashboardStatsViewModel(
+        int OpenTickets,
+        int InProgressTickets,
+        int DoneTickets,
+        int Articles,
+        bool ApiHealthy,
+        string HealthCheckedAtLocal);
+}
