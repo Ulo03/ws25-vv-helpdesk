@@ -89,7 +89,7 @@ else
     bool creating;
     string? createError;
 
-    readonly Dictionary<int, string> deleteErrorById = new();
+    readonly Dictionary<Guid, string> deleteErrorById = new();
 
     NewArticleModel newArticle = new();
 
@@ -131,7 +131,6 @@ else
             newArticle = new();
             await ReloadAsync();
 
-            // Optional: direkt zur Edit-Seite (oder später Detail-Seite)
             Nav.NavigateTo($"/knowledge/{id}/edit");
         }
         catch (Exception ex)
@@ -144,12 +143,12 @@ else
         }
     }
 
-    void NavigateToEdit(int id)
+    void NavigateToEdit(Guid id)
     {
         Nav.NavigateTo($"/knowledge/{id}/edit");
     }
 
-    async Task DeleteAsync(int id)
+    async Task DeleteAsync(Guid id)
     {
         deleteErrorById.Remove(id);
 

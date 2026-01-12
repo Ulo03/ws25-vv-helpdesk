@@ -1,4 +1,4 @@
-﻿@page "/knowledge/{Id:int}/edit"
+﻿@page "/knowledge/{Id:guid}/edit"
 @using System.ComponentModel.DataAnnotations
 @using ServiceDesk.Web.Models
 @inject IKnowledgeClient KnowledgeClient
@@ -52,7 +52,7 @@ else
 }
 
 @code {
-    [Parameter] public int Id { get; set; }
+    [Parameter] public Guid Id { get; set; }
 
     EditArticleModel? model;
     string? loadError;

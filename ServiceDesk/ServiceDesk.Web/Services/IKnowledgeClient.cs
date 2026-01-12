@@ -6,11 +6,11 @@ public interface IKnowledgeClient
 {
     Task<IReadOnlyList<KnowledgeArticleSummaryDto>> GetArticlesAsync(CancellationToken cancellationToken);
 
-    Task<KnowledgeArticleDetailDto?> GetArticleAsync(int id, CancellationToken cancellationToken);
+    Task<KnowledgeArticleDetailDto?> GetArticleAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<int> CreateArticleAsync(NewKnowledgeArticleDto article, CancellationToken cancellationToken);
+    Task<Guid> CreateArticleAsync(NewKnowledgeArticleDto article, CancellationToken cancellationToken);
 
-    Task UpdateArticleAsync(int id, UpdateKnowledgeArticleDto article, CancellationToken cancellationToken);
+    Task UpdateArticleAsync(Guid id, UpdateKnowledgeArticleDto article, CancellationToken cancellationToken);
 
-    Task DeleteArticleAsync(int id, CancellationToken cancellationToken);
+    Task DeleteArticleAsync(Guid id, CancellationToken cancellationToken);
 }

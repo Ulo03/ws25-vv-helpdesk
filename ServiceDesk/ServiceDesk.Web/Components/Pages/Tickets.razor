@@ -1,5 +1,6 @@
 ﻿@page "/tickets"
 @using ServiceDesk.Web.Models
+@using ServiceDesk.Web.Utils
 @inject ITicketClient TicketClient
 @inject NavigationManager Nav
 
@@ -136,7 +137,7 @@ else
                         var url = $"/tickets/{t.Id}";
 
                         <tr style="cursor:pointer;" @onclick="() => Nav.NavigateTo(url)">
-                            <td>@t.Id</td>
+                            <td><span class="font-monospace">@IdFormat.Short(t.Id)</span></td>
                             <td>@t.Title</td>
                             <td>@t.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         </tr>
