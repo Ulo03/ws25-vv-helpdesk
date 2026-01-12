@@ -30,7 +30,7 @@ public sealed class InMemoryTicketClient : ITicketClient
                 new(2, "admin", "Resolved by updating client.", DateTimeOffset.Now.AddDays(-2))
             });
 
-        nextTicketId = 2;
+        nextTicketId = store.Keys.Max();
     }
 
     public Task<IReadOnlyList<TicketSummaryDto>> GetTicketsAsync(CancellationToken cancellationToken)
