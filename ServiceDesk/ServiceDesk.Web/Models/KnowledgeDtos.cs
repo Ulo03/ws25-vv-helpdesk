@@ -6,3 +6,20 @@ public sealed record KnowledgeArticleSummaryDto(
     string Preview,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<string> Tags);
+
+public sealed record KnowledgeArticleDetailDto(
+    int Id,
+    string Title,
+    string Body,
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<string> Tags);
+
+public sealed record NewKnowledgeArticleDto(
+    string Title, 
+    string Body, 
+    IReadOnlyList<string> Tags);
+
+public sealed record UpdateKnowledgeArticleDto(
+    string Title, 
+    string Body, 
+    IReadOnlyList<string> Tags);

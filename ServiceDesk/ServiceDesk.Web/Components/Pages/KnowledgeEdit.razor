@@ -1,0 +1,154 @@
+﻿@page "/knowledge/{Id:int}/edit"
+@using System.ComponentModel.DataAnnotations
+@using ServiceDesk.Web.Models
+@inject IKnowledgeClient KnowledgeClient
+@inject NavigationManager Nav
+
+<PageTitle>Edit Article</PageTitle>
+
+<h1 class="mb-3">Edit Article</h1>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger" role="alert">@loadError</div>
+}
+else if (model is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="card">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="card-body">
+            <div class="mb-2">
+                <label class="form-label">Title</label>
+                <InputText class="form-control" @bind-Value="model.Title" />
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label">Tags (comma-separated)</label>
+                <InputText class="form-control" @bind-Value="model.TagsCsv" />
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label">Body</label>
+                <InputTextArea class="form-control" rows="10" @bind-Value="model.Body" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" disabled="@saving">Save</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="Back">Back</button>
+            </div>
+
+            @if (saveError is not null)
+            {
+                <div class="alert alert-danger mt-2 mb-0">@saveError</div>
+            }
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    EditArticleModel? model;
+    string? loadError;
+
+    bool saving;
+    string? saveError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            loadError = null;
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var article = await KnowledgeClient.GetArticleAsync(Id, cts.Token);
+
+            if (article is null)
+            {
+                loadError = $"Article {Id} not found.";
+                model = null;
+                return;
+            }
+
+            model = new EditArticleModel
+            {
+                Title = article.Title,
+                Body = article.Body,
+                TagsCsv = article.Tags.Count == 0 ? string.Empty : string.Join(", ", article.Tags)
+            };
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+    }
+
+    async Task SaveAsync()
+    {
+        if (model is null) return;
+
+        saving = true;
+        saveError = null;
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await KnowledgeClient.UpdateArticleAsync(
+                Id,
+                new UpdateKnowledgeArticleDto(
+                    model.Title,
+                    model.Body,
+                    ParseTags(model.TagsCsv)),
+                cts.Token);
+
+            Back();
+        }
+        catch (Exception ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    void Back()
+    {
+        Nav.NavigateTo("/knowledge");
+    }
+
+    static IReadOnlyList<string> ParseTags(string csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv))
+            return Array.Empty<string>();
+
+        return csv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(t => t.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    sealed class EditArticleModel
+    {
+        [Required]
+        [MinLength(3)]
+        [MaxLength(200)]
+        public string Title { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string TagsCsv { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(10)]
+        [MaxLength(20000)]
+        public string Body { get; set; } = string.Empty;
+    }
+}
