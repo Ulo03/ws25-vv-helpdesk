@@ -8,26 +8,29 @@ namespace ServiceDesk.Web.Services;
 public sealed class InMemoryTicketClient : ITicketClient
 {
     readonly ConcurrentDictionary<int, TicketDetailDto> store = new();
+    int nextTicketId;
 
     public InMemoryTicketClient()
     {
-        store[1] = new TicketDetailDto(
-            1, "Cannot login", TicketStatus.InProgress, DateTimeOffset.Now.AddHours(-1),
+        store[0] = new TicketDetailDto(
+            0, "Cannot login", "User reports login fails with correct password.", TicketStatus.InProgress, DateTimeOffset.Now.AddHours(-1),
             new List<TicketCommentDto>
             {
                 new(1, "admin", "We are looking into it.", DateTimeOffset.Now.AddMinutes(-50))
             });
 
-        store[2] = new TicketDetailDto(
-            2, "Feature request: dark mode", TicketStatus.Open, DateTimeOffset.Now.AddDays(-1),
+        store[1] = new TicketDetailDto(
+            1, "Feature request: dark mode", "Please add dark mode to the UI.", TicketStatus.Open, DateTimeOffset.Now.AddDays(-1),
             Array.Empty<TicketCommentDto>());
 
-        store[3] = new TicketDetailDto(
-            3, "VPN not connecting", TicketStatus.Done, DateTimeOffset.Now.AddDays(-3),
+        store[2] = new TicketDetailDto(
+            2, "VPN not connecting", "Client cannot connect to VPN from home network.", TicketStatus.Done, DateTimeOffset.Now.AddDays(-3),
             new List<TicketCommentDto>
             {
                 new(2, "admin", "Resolved by updating client.", DateTimeOffset.Now.AddDays(-2))
             });
+
+        nextTicketId = store.Keys.Max();
     }
 
     public Task<IReadOnlyList<TicketSummaryDto>> GetTicketsAsync(CancellationToken cancellationToken)
@@ -45,8 +48,43 @@ public sealed class InMemoryTicketClient : ITicketClient
     public Task<TicketDetailDto?> GetTicketAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
         return Task.FromResult(store.TryGetValue(id, out var t) ? t : null);
+    }
+
+    public Task<int> CreateTicketAsync(NewTicketDto ticket, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(ticket.Title))
+            throw new ArgumentException("Title must not be empty.", nameof(ticket));
+
+        var id = Interlocked.Increment(ref nextTicketId);
+
+        store[id] = new TicketDetailDto(
+            id,
+            ticket.Title.Trim(),
+            (ticket.Description ?? string.Empty).Trim(),
+            TicketStatus.Open,
+            DateTimeOffset.Now,
+            Array.Empty<TicketCommentDto>());
+
+        return Task.FromResult(id);
+    }
+
+    public Task UpdateStatusAsync(int ticketId, UpdateTicketStatusDto status, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        store.AddOrUpdate(
+            ticketId,
+            _ => throw new InvalidOperationException($"Ticket {ticketId} not found."),
+            (_, existing) => existing with
+            {
+                Status = status.Status,
+                UpdatedAt = DateTimeOffset.Now
+            });
+
+        return Task.CompletedTask;
     }
 
     public Task AddCommentAsync(int ticketId, NewCommentDto comment, CancellationToken cancellationToken)

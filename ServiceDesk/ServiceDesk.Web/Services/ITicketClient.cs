@@ -8,5 +8,9 @@ public interface ITicketClient
 
     Task<TicketDetailDto?> GetTicketAsync(int id, CancellationToken cancellationToken);
 
+    Task<int> CreateTicketAsync(NewTicketDto ticket, CancellationToken cancellationToken);
+
+    Task UpdateStatusAsync(int ticketId, UpdateTicketStatusDto status, CancellationToken cancellationToken);
+
     Task AddCommentAsync(int ticketId, NewCommentDto comment, CancellationToken cancellationToken);
 }

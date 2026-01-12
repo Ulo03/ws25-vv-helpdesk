@@ -11,6 +11,29 @@
     <input class="form-control" placeholder="Search title…" @bind="search" @bind:event="oninput" />
 </div>
 
+<EditForm Model="newTicket" OnValidSubmit="CreateTicketAsync" class="card mb-3">
+    <DataAnnotationsValidator />
+    <div class="card-body">
+        <h5 class="card-title mb-3">New Ticket</h5>
+
+        <div class="mb-2">
+            <label class="form-label">Title</label>
+            <InputText class="form-control" @bind-Value="newTicket.Title" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Description</label>
+            <InputTextArea class="form-control" rows="3" @bind-Value="newTicket.Description" />
+        </div>
+
+        <button class="btn btn-primary" disabled="@creating">Create</button>
+        @if (createError is not null)
+        {
+            <div class="alert alert-danger mt-2 mb-0">@createError</div>
+        }
+    </div>
+</EditForm>
+
 @if (loadError is not null)
 {
     <div class="alert alert-danger" role="alert">@loadError</div>
@@ -30,6 +53,49 @@ else
     IReadOnlyList<TicketSummaryDto>? tickets;
     string? loadError;
     string search = string.Empty;
+    bool creating;
+    string? createError;
+    NewTicketModel newTicket = new();
+
+    async Task CreateTicketAsync()
+    {
+        creating = true;
+        createError = null;
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var id = await TicketClient.CreateTicketAsync(
+                new NewTicketDto(newTicket.Title, newTicket.Description),
+                cts.Token);
+
+            newTicket = new();
+            using var refreshCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            tickets = await TicketClient.GetTicketsAsync(refreshCts.Token);
+
+            Nav.NavigateTo($"/tickets/{id}");
+        }
+        catch (Exception ex)
+        {
+            createError = ex.Message;
+        }
+        finally
+        {
+            creating = false;
+        }
+    }
+
+    sealed class NewTicketModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.MinLength(3)]
+        [System.ComponentModel.DataAnnotations.MaxLength(200)]
+        public string Title { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.MaxLength(4000)]
+        public string Description { get; set; } = string.Empty;
+    }
+
 
     protected override async Task OnInitializedAsync()
     {

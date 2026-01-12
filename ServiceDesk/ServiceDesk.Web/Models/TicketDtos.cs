@@ -15,8 +15,13 @@ public sealed record TicketCommentDto(
 public sealed record TicketDetailDto(
     int Id,
     string Title,
+    string Description,
     TicketStatus Status,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<TicketCommentDto> Comments);
+
+public sealed record NewTicketDto(string Title, string Description);
+
+public sealed record UpdateTicketStatusDto(TicketStatus Status);
 
 public sealed record NewCommentDto(string Message);
