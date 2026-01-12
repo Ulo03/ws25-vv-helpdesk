@@ -21,7 +21,7 @@ public class ServiceDeskDbContext(DbContextOptions<ServiceDeskDbContext> options
             entity.Property(e => e.Username).IsRequired();
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.Property(e => e.Role).IsRequired();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("getdate()");
         });
 
         modelBuilder.Entity<Ticket>(entity =>
@@ -29,8 +29,8 @@ public class ServiceDeskDbContext(DbContextOptions<ServiceDeskDbContext> options
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).IsRequired();
             entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("getdate()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("getdate()");
 
             entity.HasOne(e => e.CreatedBy)
                 .WithMany(u => u.CreatedTickets)
@@ -47,7 +47,7 @@ public class ServiceDeskDbContext(DbContextOptions<ServiceDeskDbContext> options
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Content).IsRequired();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("getdate()");
 
             entity.HasOne(e => e.Ticket)
                 .WithMany(t => t.Comments)
@@ -65,8 +65,8 @@ public class ServiceDeskDbContext(DbContextOptions<ServiceDeskDbContext> options
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).IsRequired();
             entity.Property(e => e.Content).IsRequired();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("getdate()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("getdate()");
 
             entity.HasOne(e => e.Author)
                 .WithMany(u => u.Articles)
