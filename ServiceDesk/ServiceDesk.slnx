@@ -3,5 +3,6 @@
   <Project Path="ServiceDesk.AppHost/ServiceDesk.AppHost.csproj" />
   <Project Path="ServiceDesk.Data/ServiceDesk.Data.csproj" />
   <Project Path="ServiceDesk.ServiceDefaults/ServiceDesk.ServiceDefaults.csproj" />
+  <Project Path="ServiceDesk.Test/ServiceDesk.Test.csproj" Id="6c7d8845-1d4a-45b8-a3c2-f7c0c1f71117" />
   <Project Path="ServiceDesk.Web/ServiceDesk.Web.csproj" />
 </Solution>
