@@ -27,6 +27,7 @@ jobs:
               with:
                   config: p/default
 
+
     # ---------------------------------
     # BUILD
     # ---------------------------------
@@ -51,3 +52,27 @@ jobs:
 
             - name: Build
               run: dotnet build ServiceDesk/ServiceDesk.slnx --configuration Release --no-restore
+
+
+    # ---------------------------------
+    # TEST
+    # ---------------------------------
+    test:
+        name: Run Tests
+        runs-on: ubuntu-latest
+        needs: build
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "10.0.x"
+
+            - name: Restore
+              run: dotnet restore ServiceDesk/ServiceDesk.slnx
+
+            - name: Run tests
+              run: dotnet test ServiceDesk/ServiceDesk.slnx --configuration Release --no-build --logger "trx"
+
