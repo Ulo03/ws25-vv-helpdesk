@@ -1,19 +1,18 @@
 ﻿namespace ServiceDesk.Web.Models;
 
-public sealed record TicketSummaryDto(
-    int Id, 
-    string Title, 
-    TicketStatus Status, 
-    DateTimeOffset UpdatedAt);
+public enum TicketStatus
+{
+    Open = 0,
+    InProgress = 1,
+    Done = 2
+}
 
-public sealed record TicketCommentDto(
-    int Id, 
-    string Author, 
-    string Message, 
-    DateTimeOffset CreatedAt);
+public sealed record TicketSummaryDto(Guid Id, string Title, TicketStatus Status, DateTimeOffset UpdatedAt);
+
+public sealed record TicketCommentDto(Guid Id, string Author, string Message, DateTimeOffset CreatedAt);
 
 public sealed record TicketDetailDto(
-    int Id,
+    Guid Id,
     string Title,
     string Description,
     TicketStatus Status,

@@ -1,6 +1,7 @@
-﻿@page "/tickets/{Id:int}"
+﻿@page "/tickets/{Id:guid}"
 @using System.ComponentModel.DataAnnotations
 @using ServiceDesk.Web.Models
+@using ServiceDesk.Web.Utils
 @inject ITicketClient TicketClient
 
 <PageTitle>Ticket</PageTitle>
@@ -17,7 +18,7 @@ else
 {
     <div class="d-flex align-items-start justify-content-between gap-3">
         <div>
-            <h1 class="mb-1">#@ticket.Id – @ticket.Title</h1>
+            <h1 class="mb-1"><span class="text-muted font-monospace">#@IdFormat.Short(ticket.Id)</span> – @ticket.Title</h1>
             <div class="text-muted">
                 Status: <span class="fw-semibold">@ticket.Status</span> · Updated: @ticket.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
             </div>
@@ -84,7 +85,7 @@ else
 }
 
 @code {
-    [Parameter] public int Id { get; set; }
+    [Parameter] public Guid Id { get; set; }
 
     TicketDetailDto? ticket;
     string? loadError;

@@ -1,35 +1,53 @@
-name: .NET Build
+name: CI
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
 
 jobs:
-  build:
-    name: Build .NET solution
-    runs-on: ubuntu-latest
+    # ---------------------------------
+    # SECURITY (GitLab SAST + Secrets)
+    # ---------------------------------
+    security:
+        name: Security Scan
+        runs-on: ubuntu-latest
 
-    steps:
-      # 1. Checkout repository
-      - name: Checkout source
-        uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      # 2. Install .NET SDK
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
+            # Secret detection
+            - name: Scan for secrets (Gitleaks)
+              uses: gitleaks/gitleaks-action@v2
 
-      # 3. Restore NuGet packages
-      - name: Restore dependencies
-        run: dotnet restore ServiceDesk/ServiceDesk.slnx
+            # SAST
+            - name: Run Semgrep SAST
+              uses: returntocorp/semgrep-action@v1
+              with:
+                  config: p/default
 
-      # 4. Build
-      - name: Build
-        run: dotnet build ServiceDesk/ServiceDesk.slnx --configuration Release --no-restore
+    # ---------------------------------
+    # BUILD
+    # ---------------------------------
+    build:
+        name: Build .NET
+        runs-on: ubuntu-latest
+        needs: security
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "10.0.x"
+
+            - name: Restore
+              run: dotnet restore ServiceDesk/ServiceDesk.slnx
+
+            - name: Lint
+              run: dotnet format ServiceDesk/ServiceDesk.slnx --verify-no-changes --severity warn
+
+            - name: Build
+              run: dotnet build ServiceDesk/ServiceDesk.slnx --configuration Release --no-restore
