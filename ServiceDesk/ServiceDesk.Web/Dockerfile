@@ -4,27 +4,21 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ServiceDesk/ServiceDesk.slnx ./
-COPY ServiceDesk/ServiceDesk.Web/ServiceDesk.Web.csproj ServiceDesk/ServiceDesk.Web/
+# copy only what the API needs
+COPY ServiceDesk/ServiceDesk.Web/ ServiceDesk/ServiceDesk.Web/
+COPY ServiceDesk/ServiceDesk.Contracts/ ServiceDesk/ServiceDesk.Contracts/
+COPY ServiceDesk/ServiceDesk.ServiceDefaults/ ServiceDesk/ServiceDesk.ServiceDefaults/
 
-RUN dotnet restore ServiceDesk.slnx
+WORKDIR /src/ServiceDesk/ServiceDesk.Web
 
-COPY ServiceDesk/. ./ServiceDesk/
-
-RUN dotnet publish ServiceDesk/ServiceDesk.Web/ServiceDesk.Web.csproj \
-    -c Release \
-    -o /app/publish \
-    --no-restore
+RUN dotnet restore
+RUN dotnet publish -c Release -o /app/publish
 
 # =========================
 # Runtime stage
 # =========================
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
-
 COPY --from=build /app/publish .
-
-ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-
 ENTRYPOINT ["dotnet", "ServiceDesk.Web.dll"]
