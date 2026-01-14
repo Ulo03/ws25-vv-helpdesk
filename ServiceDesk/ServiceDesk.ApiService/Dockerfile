@@ -22,7 +22,7 @@ RUN dotnet publish ServiceDesk/ServiceDesk.ApiService/ServiceDesk.ApiService.csp
 # =========================
 # Runtime stage
 # =========================
-FROM mcr.microsoft.com/dotnet/aspnet:13.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
 COPY --from=build /app/publish .
