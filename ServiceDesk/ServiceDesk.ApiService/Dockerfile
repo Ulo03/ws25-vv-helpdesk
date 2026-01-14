@@ -1,7 +1,7 @@
 # =========================
 # Build stage
 # =========================
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution & project files (for cache)
@@ -22,7 +22,7 @@ RUN dotnet publish ServiceDesk/ServiceDesk.ApiService/ServiceDesk.ApiService.csp
 # =========================
 # Runtime stage
 # =========================
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:13.0
 WORKDIR /app
 
 COPY --from=build /app/publish .
