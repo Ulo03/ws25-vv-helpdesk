@@ -106,8 +106,7 @@ jobs:
               file: ServiceDesk/ServiceDesk.ApiService/Dockerfile
               push: true
               tags: |
-                ghcr.io/ulo03/ws25-vv-helpdesk-api:latest
-                206517/ws25-vv-helpdesk-api:latest
+                docker.io/206517/ws25-vv-helpdesk-api:latest
     
           - name: Build & push Web image
             uses: docker/build-push-action@v5
@@ -116,7 +115,6 @@ jobs:
               file: ServiceDesk/ServiceDesk.Web/Dockerfile
               push: true
               tags: |
-                ghcr.io/ulo03/ws25-vv-helpdesk-web:latest
-                206517/ws25-vv-helpdesk-web:latest
+                docker.io/206517/ws25-vv-helpdesk-web:latest
 
 
