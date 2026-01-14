@@ -1,1 +1,2 @@
 ServiceDesk/docker-compose.yml
+**/wwwroot/lib/**
