@@ -1,0 +1,78 @@
+services:
+  env-dashboard:
+    image: "mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest"
+    ports:
+      - "18888"
+    expose:
+      - "18889"
+      - "18890"
+    networks:
+      - "aspire"
+    restart: "always"
+  sql:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SQL_PASSWORD}"
+    expose:
+      - "1433"
+    volumes:
+      - type: "volume"
+        target: "/var/opt/mssql"
+        source: "servicedesk.apphost-e6595dedba-sql-data"
+        read_only: false
+    networks:
+      - "aspire"
+  servicedesk-apiservice:
+    image: "${SERVICEDESK_APISERVICE_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${SERVICEDESK_APISERVICE_PORT}"
+      ConnectionStrings__servicedesk: "Server=sql,1433;User ID=sa;Password=${SQL_PASSWORD};TrustServerCertificate=true;Initial Catalog=servicedesk"
+      SERVICEDESK_HOST: "sql"
+      SERVICEDESK_PORT: "1433"
+      SERVICEDESK_USERNAME: "sa"
+      SERVICEDESK_PASSWORD: "${SQL_PASSWORD}"
+      SERVICEDESK_URI: "mssql://sa:${SQL_PASSWORD}@sql:1433/servicedesk"
+      SERVICEDESK_JDBCCONNECTIONSTRING: "jdbc:sqlserver://sql:1433;trustServerCertificate=true;databaseName=servicedesk"
+      SERVICEDESK_DATABASENAME: "servicedesk"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "servicedesk-apiservice"
+    expose:
+      - "${SERVICEDESK_APISERVICE_PORT}"
+    depends_on:
+      sql:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  servicedesk-web:
+    image: "${SERVICEDESK_WEB_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${SERVICEDESK_WEB_PORT}"
+      SERVICEDESK_APISERVICE_HTTP: "http://servicedesk-apiservice:${SERVICEDESK_APISERVICE_PORT}"
+      services__servicedesk-apiservice__http__0: "http://servicedesk-apiservice:${SERVICEDESK_APISERVICE_PORT}"
+      SERVICEDESK_APISERVICE_HTTPS: "https://servicedesk-apiservice:${SERVICEDESK_APISERVICE_PORT}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://env-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "servicedesk-web"
+    ports:
+      - "${SERVICEDESK_WEB_PORT}"
+    depends_on:
+      servicedesk-apiservice:
+        condition: "service_started"
+    networks:
+      - "aspire"
+networks:
+  aspire:
+    driver: "bridge"
+volumes:
+  servicedesk.apphost-e6595dedba-sql-data:
+    driver: "local"
