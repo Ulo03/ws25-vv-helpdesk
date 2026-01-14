@@ -107,7 +107,7 @@ jobs:
               push: true
               tags: |
                 ghcr.io/ulo03/ws25-vv-helpdesk-api:latest
-                ghcr.io/ulo03/ws25-vv-helpdesk-api:${{ github.sha }}
+                206517/ws25-vv-helpdesk-api:latest
     
           - name: Build & push Web image
             uses: docker/build-push-action@v5
@@ -117,7 +117,6 @@ jobs:
               push: true
               tags: |
                 ghcr.io/ulo03/ws25-vv-helpdesk-web:latest
-                ghcr.io/ulo03/ws25-vv-helpdesk-web:${{ github.sha }}
-
+                206517/ws25-vv-helpdesk-web:latest
 
 
