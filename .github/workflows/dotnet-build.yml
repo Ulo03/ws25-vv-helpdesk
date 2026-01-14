@@ -28,7 +28,6 @@ jobs:
               uses: returntocorp/semgrep-action@v1
               with:
                 config: p/default
-                exclude: ServiceDesk/docker-compose.yml
 
 
     # ---------------------------------
