@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: servicedesk-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: servicedesk-api
+    environment:
+      ConnectionStrings__servicedesk: ${CONNECTIONSTRING_SERVICEDESK}
+    depends_on:
+      - sql
+    ports:
+      - "8081:8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: servicedesk-web
+    environment:
+      ServiceDesk__ApiBaseUrl: "http://api:8080"
+    depends_on:
+      - api
+    ports:
+      - "8080:8080"
+
+volumes:
+  sql_data:
