@@ -1,6 +1,5 @@
 ﻿@page "/tickets/{Id:guid}"
 @using System.ComponentModel.DataAnnotations
-@using ServiceDesk.Web.Models
 @using ServiceDesk.Web.Utils
 @inject ITicketClient TicketClient
 
@@ -20,11 +19,15 @@ else
         <div>
             <h1 class="mb-1"><span class="text-muted font-monospace">#@IdFormat.Short(ticket.Id)</span> – @ticket.Title</h1>
             <div class="text-muted">
-                Status: <span class="fw-semibold">@ticket.Status</span> · Updated: @ticket.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+                Status: <span class="fw-semibold">@ticket.Status</span>
+                · Updated: @ticket.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+                · Created by: @ticket.CreatedByUsername
+                · Assigned: @(ticket.AssignedToUsername ?? "-")
             </div>
+
             <div class="mt-3">
                 <div class="fw-semibold">Description</div>
-                <div class="text-muted" style="white-space:pre-wrap">@ticket.Description</div>
+                <div class="text-muted" style="white-space:pre-wrap">@((ticket.Description ?? string.Empty).Trim())</div>
             </div>
 
             <div class="mt-3">
@@ -41,7 +44,6 @@ else
                 }
             </div>
         </div>
-        
     </div>
 
     <hr />
@@ -58,8 +60,8 @@ else
             @foreach (var c in ticket.Comments.OrderByDescending(c => c.CreatedAt))
             {
                 <div class="list-group-item">
-                    <div class="small text-muted">@c.Author · @c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
-                    <div style="white-space:pre-wrap">@c.Message</div>
+                    <div class="small text-muted">@c.AuthorUsername · @c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div style="white-space:pre-wrap">@c.Content</div>
                 </div>
             }
         </div>
@@ -71,8 +73,8 @@ else
         <ValidationSummary />
 
         <div class="mb-3">
-            <label class="form-label">Message</label>
-            <InputTextArea class="form-control" @bind-Value="newComment.Message" rows="4" />
+            <label class="form-label">Content</label>
+            <InputTextArea class="form-control" @bind-Value="newComment.Content" rows="4" />
         </div>
 
         <button class="btn btn-primary" disabled="@isSubmitting">Submit</button>
@@ -122,7 +124,6 @@ else
         }
     }
 
-
     protected override async Task OnParametersSetAsync()
     {
         try
@@ -130,10 +131,9 @@ else
             submitError = null;
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             ticket = await TicketClient.GetTicketAsync(Id, cts.Token);
+
             if (ticket is null)
-            {
                 loadError = $"Ticket {Id} not found.";
-            }
         }
         catch (Exception ex)
         {
@@ -151,7 +151,7 @@ else
         try
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            await TicketClient.AddCommentAsync(ticket.Id, new NewCommentDto(newComment.Message), cts.Token);
+            await TicketClient.AddCommentAsync(ticket.Id, new CreateCommentDto(newComment.Content.Trim()), cts.Token);
 
             newComment = new();
             ticket = await TicketClient.GetTicketAsync(Id, cts.Token);
@@ -171,6 +171,6 @@ else
         [Required]
         [MinLength(2)]
         [MaxLength(2000)]
-        public string Message { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
     }
 }

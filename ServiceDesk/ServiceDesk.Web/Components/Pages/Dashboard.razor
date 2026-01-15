@@ -1,5 +1,4 @@
 ﻿@page "/"
-@using ServiceDesk.Web.Models
 @inject ITicketClient TicketClient
 @inject IKnowledgeClient KnowledgeClient
 @inject IHealthClient HealthClient
@@ -87,15 +86,16 @@ else
 
             await Task.WhenAll(ticketsTask, articlesTask, healthTask);
 
-            var tickets = ticketsTask.Result;
-            var articles = articlesTask.Result;
+            var tickets = await ticketsTask;
+            var articles = await articlesTask;
+            var isHealthy = await healthTask;
 
             stats = new DashboardStatsViewModel(
                 OpenTickets: tickets.Count(t => t.Status == TicketStatus.Open),
                 InProgressTickets: tickets.Count(t => t.Status == TicketStatus.InProgress),
                 DoneTickets: tickets.Count(t => t.Status == TicketStatus.Done),
                 Articles: articles.Count,
-                ApiHealthy: healthTask.Result,
+                ApiHealthy: isHealthy,
                 HealthCheckedAtLocal: DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         }
         catch (Exception ex)

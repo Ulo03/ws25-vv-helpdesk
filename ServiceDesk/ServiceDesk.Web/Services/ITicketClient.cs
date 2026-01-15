@@ -1,4 +1,4 @@
-﻿using ServiceDesk.Web.Models;
+﻿using ServiceDesk.Contracts;
 
 namespace ServiceDesk.Web.Services;
 
@@ -8,9 +8,9 @@ public interface ITicketClient
 
     Task<TicketDetailDto?> GetTicketAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<Guid> CreateTicketAsync(NewTicketDto ticket, CancellationToken cancellationToken);
+    Task<Guid> CreateTicketAsync(CreateTicketDto ticket, CancellationToken cancellationToken);
 
     Task UpdateStatusAsync(Guid ticketId, UpdateTicketStatusDto status, CancellationToken cancellationToken);
 
-    Task AddCommentAsync(Guid ticketId, NewCommentDto comment, CancellationToken cancellationToken);
+    Task AddCommentAsync(Guid ticketId, CreateCommentDto comment, CancellationToken cancellationToken);
 }

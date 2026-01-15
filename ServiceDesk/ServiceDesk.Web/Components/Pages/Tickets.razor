@@ -1,5 +1,4 @@
 ﻿@page "/tickets"
-@using ServiceDesk.Web.Models
 @using ServiceDesk.Web.Utils
 @inject ITicketClient TicketClient
 @inject NavigationManager Nav
@@ -66,14 +65,15 @@ else
         try
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            var description = string.IsNullOrWhiteSpace(newTicket.Description) ? null : newTicket.Description.Trim();
             var id = await TicketClient.CreateTicketAsync(
-                new NewTicketDto(newTicket.Title, newTicket.Description),
+                new CreateTicketDto(newTicket.Title.Trim(), description),
                 cts.Token);
 
             newTicket = new();
-            using var refreshCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            tickets = await TicketClient.GetTicketsAsync(refreshCts.Token);
 
+            tickets = await TicketClient.GetTicketsAsync(cts.Token);
             Nav.NavigateTo($"/tickets/{id}");
         }
         catch (Exception ex)
@@ -97,7 +97,6 @@ else
         public string Description { get; set; } = string.Empty;
     }
 
-
     protected override async Task OnInitializedAsync()
     {
         try
@@ -118,32 +117,32 @@ else
             .OrderByDescending(t => t.UpdatedAt);
 
     RenderFragment TicketGroup(string title, TicketStatus status, bool openByDefault) => @<details class="mb-3" open="@openByDefault">
-        <summary class="h5">
-            @title <span class="text-muted">(@Filtered(status).Count())</span>
-        </summary>
+    <summary class="h5">
+        @title <span class="text-muted">(@Filtered(status).Count())</span>
+    </summary>
 
-        <div class="table-responsive mt-2">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th style="width:80px;">Id</th>
-                        <th>Title</th>
-                        <th style="width:220px;">Updated</th>
+    <div class="table-responsive mt-2">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:80px;">Id</th>
+                    <th>Title</th>
+                    <th style="width:220px;">Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Filtered(status))
+                                {
+                                var url = $"/tickets/{t.Id}";
+
+                    <tr style="cursor:pointer;" @onclick="() => Nav.NavigateTo(url)">
+                        <td><span class="font-monospace">@IdFormat.Short(t.Id)</span></td>
+                        <td>@t.Title</td>
+                        <td>@t.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var t in Filtered(status))
-                    {
-                        var url = $"/tickets/{t.Id}";
-
-                        <tr style="cursor:pointer;" @onclick="() => Nav.NavigateTo(url)">
-                            <td><span class="font-monospace">@IdFormat.Short(t.Id)</span></td>
-                            <td>@t.Title</td>
-                            <td>@t.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </details>;
+                }
+            </tbody>
+        </table>
+    </div>
+</details>;
 }

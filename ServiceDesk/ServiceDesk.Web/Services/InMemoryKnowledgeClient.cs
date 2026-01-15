@@ -1,70 +1,79 @@
 ﻿using System.Collections.Concurrent;
-using ServiceDesk.Web.Models;
+using ServiceDesk.Contracts;
 
 namespace ServiceDesk.Web.Services;
 
 public sealed class InMemoryKnowledgeClient : IKnowledgeClient
 {
-    readonly ConcurrentDictionary<Guid, KnowledgeArticleDetailDto> _store = new();
+    readonly ConcurrentDictionary<Guid, ArticleDetailDto> _store = new();
 
     public InMemoryKnowledgeClient()
     {
         var a1 = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
         var a2 = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222");
 
-        _store[a1] = new KnowledgeArticleDetailDto(
+        var now = DateTimeOffset.UtcNow;
+
+        _store[a1] = new ArticleDetailDto(
             a1,
             "How to reset your password",
             "Open the login page and click “Forgot password”.\nThen follow the steps…",
-            DateTimeOffset.Now.AddDays(-2),
-            new[] { "account", "login" });
+            now.AddDays(-3),
+            now.AddDays(-2),
+            "admin");
 
-        _store[a2] = new KnowledgeArticleDetailDto(
+        _store[a2] = new ArticleDetailDto(
             a2,
             "VPN troubleshooting",
             "1) Check internet\n2) Verify server address\n3) Update client\n4) Retry…",
-            DateTimeOffset.Now.AddDays(-7),
-            new[] { "network", "vpn" });
+            now.AddDays(-8),
+            now.AddDays(-7),
+            "admin");
     }
 
-    public Task<IReadOnlyList<KnowledgeArticleSummaryDto>> GetArticlesAsync(CancellationToken cancellationToken)
+    public Task<IReadOnlyList<ArticleSummaryDto>> GetArticlesAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var list = _store.Values
-            .Select(a => new KnowledgeArticleSummaryDto(a.Id, a.Title, CreatePreview(a.Body), a.UpdatedAt, a.Tags))
+            .Select(a => new ArticleSummaryDto(a.Id, a.Title, CreatePreview(a.Content), a.UpdatedAt, a.AuthorUsername))
             .OrderByDescending(a => a.UpdatedAt)
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<KnowledgeArticleSummaryDto>>(list);
+        return Task.FromResult<IReadOnlyList<ArticleSummaryDto>>(list);
     }
 
-    public Task<KnowledgeArticleDetailDto?> GetArticleAsync(Guid id, CancellationToken cancellationToken)
+    public Task<ArticleDetailDto?> GetArticleAsync(Guid id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_store.TryGetValue(id, out var a) ? a : null);
     }
 
-    public Task<Guid> CreateArticleAsync(NewKnowledgeArticleDto article, CancellationToken cancellationToken)
+    public Task<Guid> CreateArticleAsync(CreateArticleDto article, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(article.Title))
-            throw new ArgumentException("Title must not be empty.", nameof(article));
+        if (string.IsNullOrWhiteSpace(article.Title) || article.Title.Trim().Length < 3)
+            throw new ArgumentException("Title must be at least 3 characters long.", nameof(article));
+
+        if (string.IsNullOrWhiteSpace(article.Content) || article.Content.Trim().Length < 10)
+            throw new ArgumentException("Content must be at least 10 characters long.", nameof(article));
 
         var id = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
 
-        _store[id] = new KnowledgeArticleDetailDto(
+        _store[id] = new ArticleDetailDto(
             id,
             article.Title.Trim(),
-            (article.Body ?? string.Empty).Trim(),
-            DateTimeOffset.Now,
-            NormalizeTags(article.Tags));
+            article.Content.Trim(),
+            now,
+            now,
+            "admin");
 
         return Task.FromResult(id);
     }
 
-    public Task UpdateArticleAsync(Guid id, UpdateKnowledgeArticleDto article, CancellationToken cancellationToken)
+    public Task UpdateArticleAsync(Guid id, UpdateArticleDto article, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -74,9 +83,8 @@ public sealed class InMemoryKnowledgeClient : IKnowledgeClient
             (_, existing) => existing with
             {
                 Title = article.Title.Trim(),
-                Body = (article.Body ?? string.Empty).Trim(),
-                Tags = NormalizeTags(article.Tags),
-                UpdatedAt = DateTimeOffset.Now
+                Content = article.Content.Trim(),
+                UpdatedAt = DateTimeOffset.UtcNow
             });
 
         return Task.CompletedTask;
@@ -92,21 +100,13 @@ public sealed class InMemoryKnowledgeClient : IKnowledgeClient
         return Task.CompletedTask;
     }
 
-    static string CreatePreview(string body)
+    static string CreatePreview(string content)
     {
-        if (string.IsNullOrWhiteSpace(body))
+        if (string.IsNullOrWhiteSpace(content))
             return string.Empty;
 
-        const int max = 300;
-        var trimmed = body.Trim();
+        const int max = 140;
+        var trimmed = content.Trim();
         return trimmed.Length <= max ? trimmed : trimmed[..max] + "…";
     }
-
-    static IReadOnlyList<string> NormalizeTags(IReadOnlyList<string> tags) =>
-        tags
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
-            .ToList();
 }

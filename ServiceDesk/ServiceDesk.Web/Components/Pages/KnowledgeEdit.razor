@@ -1,6 +1,5 @@
 ﻿@page "/knowledge/{Id:guid}/edit"
 @using System.ComponentModel.DataAnnotations
-@using ServiceDesk.Web.Models
 @inject IKnowledgeClient KnowledgeClient
 @inject NavigationManager Nav
 
@@ -29,13 +28,8 @@ else
             </div>
 
             <div class="mb-2">
-                <label class="form-label">Tags (comma-separated)</label>
-                <InputText class="form-control" @bind-Value="model.TagsCsv" />
-            </div>
-
-            <div class="mb-2">
-                <label class="form-label">Body</label>
-                <InputTextArea class="form-control" rows="10" @bind-Value="model.Body" />
+                <label class="form-label">Content</label>
+                <InputTextArea class="form-control" rows="10" @bind-Value="model.Content" />
             </div>
 
             <div class="d-flex gap-2">
@@ -65,6 +59,7 @@ else
         try
         {
             loadError = null;
+
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             var article = await KnowledgeClient.GetArticleAsync(Id, cts.Token);
 
@@ -78,8 +73,7 @@ else
             model = new EditArticleModel
             {
                 Title = article.Title,
-                Body = article.Body,
-                TagsCsv = article.Tags.Count == 0 ? string.Empty : string.Join(", ", article.Tags)
+                Content = article.Content
             };
         }
         catch (Exception ex)
@@ -100,10 +94,7 @@ else
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             await KnowledgeClient.UpdateArticleAsync(
                 Id,
-                new UpdateKnowledgeArticleDto(
-                    model.Title,
-                    model.Body,
-                    ParseTags(model.TagsCsv)),
+                new UpdateArticleDto(model.Title.Trim(), model.Content.Trim()),
                 cts.Token);
 
             Back();
@@ -118,23 +109,7 @@ else
         }
     }
 
-    void Back()
-    {
-        Nav.NavigateTo("/knowledge");
-    }
-
-    static IReadOnlyList<string> ParseTags(string csv)
-    {
-        if (string.IsNullOrWhiteSpace(csv))
-            return Array.Empty<string>();
-
-        return csv
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(t => t.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
+    void Back() => Nav.NavigateTo("/knowledge");
 
     sealed class EditArticleModel
     {
@@ -143,12 +118,9 @@ else
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
-        [MaxLength(500)]
-        public string TagsCsv { get; set; } = string.Empty;
-
         [Required]
         [MinLength(10)]
         [MaxLength(20000)]
-        public string Body { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
     }
 }

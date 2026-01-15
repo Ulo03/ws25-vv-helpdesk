@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using ServiceDesk.Web.Models;
+using ServiceDesk.Contracts;
 
 namespace ServiceDesk.Web.Services;
 
@@ -13,15 +13,20 @@ public sealed class InMemoryTicketClient : ITicketClient
         var t2 = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var t3 = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
+        var now = DateTimeOffset.UtcNow;
+
         _store[t1] = new TicketDetailDto(
             t1,
             "Cannot login",
             "User reports login fails with correct password.",
             TicketStatus.InProgress,
-            DateTimeOffset.Now.AddHours(-1),
+            now.AddHours(-2),
+            now.AddHours(-1),
+            "admin",
+            null,
             new List<TicketCommentDto>
             {
-                new(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), "admin", "We are looking into it.", DateTimeOffset.Now.AddMinutes(-50))
+                new(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), "admin", "We are looking into it.", now.AddMinutes(-50))
             });
 
         _store[t2] = new TicketDetailDto(
@@ -29,7 +34,10 @@ public sealed class InMemoryTicketClient : ITicketClient
             "Feature request: dark mode",
             "Please add dark mode to the UI.",
             TicketStatus.Open,
-            DateTimeOffset.Now.AddDays(-1),
+            now.AddDays(-2),
+            now.AddDays(-1),
+            "admin",
+            null,
             Array.Empty<TicketCommentDto>());
 
         _store[t3] = new TicketDetailDto(
@@ -37,10 +45,13 @@ public sealed class InMemoryTicketClient : ITicketClient
             "VPN not connecting",
             "Client cannot connect to VPN from home network.",
             TicketStatus.Done,
-            DateTimeOffset.Now.AddDays(-3),
+            now.AddDays(-4),
+            now.AddDays(-3),
+            "admin",
+            null,
             new List<TicketCommentDto>
             {
-                new(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "admin", "Resolved by updating client.", DateTimeOffset.Now.AddDays(-2))
+                new(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "admin", "Resolved by updating client.", now.AddDays(-2))
             });
     }
 
@@ -62,21 +73,25 @@ public sealed class InMemoryTicketClient : ITicketClient
         return Task.FromResult(_store.TryGetValue(id, out var t) ? t : null);
     }
 
-    public Task<Guid> CreateTicketAsync(NewTicketDto ticket, CancellationToken cancellationToken)
+    public Task<Guid> CreateTicketAsync(CreateTicketDto ticket, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(ticket.Title))
-            throw new ArgumentException("Title must not be empty.", nameof(ticket));
+        if (string.IsNullOrWhiteSpace(ticket.Title) || ticket.Title.Trim().Length < 3)
+            throw new ArgumentException("Title must be at least 3 characters long.", nameof(ticket));
 
         var id = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
 
         _store[id] = new TicketDetailDto(
             id,
             ticket.Title.Trim(),
-            (ticket.Description ?? string.Empty).Trim(),
+            string.IsNullOrWhiteSpace(ticket.Description) ? null : ticket.Description.Trim(),
             TicketStatus.Open,
-            DateTimeOffset.Now,
+            now,
+            now,
+            "admin",
+            null,
             Array.Empty<TicketCommentDto>());
 
         return Task.FromResult(id);
@@ -89,29 +104,31 @@ public sealed class InMemoryTicketClient : ITicketClient
         _store.AddOrUpdate(
             ticketId,
             _ => throw new InvalidOperationException($"Ticket {ticketId} not found."),
-            (_, existing) => existing with { Status = status.Status, UpdatedAt = DateTimeOffset.Now });
+            (_, existing) => existing with { Status = status.Status, UpdatedAt = DateTimeOffset.UtcNow });
 
         return Task.CompletedTask;
     }
 
-    public Task AddCommentAsync(Guid ticketId, NewCommentDto comment, CancellationToken cancellationToken)
+    public Task AddCommentAsync(Guid ticketId, CreateCommentDto comment, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(comment.Message))
-            throw new ArgumentException("Message must not be empty.", nameof(comment));
+        if (string.IsNullOrWhiteSpace(comment.Content) || comment.Content.Trim().Length < 2)
+            throw new ArgumentException("Comment must be at least 2 characters long.", nameof(comment));
 
         _store.AddOrUpdate(
             ticketId,
             _ => throw new InvalidOperationException($"Ticket {ticketId} not found."),
             (_, existing) =>
             {
-                var newComments = existing.Comments.Concat(new[]
-                {
-                    new TicketCommentDto(Guid.NewGuid(), "user", comment.Message.Trim(), DateTimeOffset.Now)
-                }).ToList();
+                var newComments = existing.Comments
+                    .Concat(new[]
+                    {
+                        new TicketCommentDto(Guid.NewGuid(), "admin", comment.Content.Trim(), DateTimeOffset.UtcNow)
+                    })
+                    .ToList();
 
-                return existing with { UpdatedAt = DateTimeOffset.Now, Comments = newComments };
+                return existing with { UpdatedAt = DateTimeOffset.UtcNow, Comments = newComments };
             });
 
         return Task.CompletedTask;

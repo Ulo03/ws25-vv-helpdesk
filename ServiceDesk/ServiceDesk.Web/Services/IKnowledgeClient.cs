@@ -1,16 +1,16 @@
-﻿using ServiceDesk.Web.Models;
+﻿using ServiceDesk.Contracts;
 
 namespace ServiceDesk.Web.Services;
 
 public interface IKnowledgeClient
 {
-    Task<IReadOnlyList<KnowledgeArticleSummaryDto>> GetArticlesAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<ArticleSummaryDto>> GetArticlesAsync(CancellationToken cancellationToken);
 
-    Task<KnowledgeArticleDetailDto?> GetArticleAsync(Guid id, CancellationToken cancellationToken);
+    Task<ArticleDetailDto?> GetArticleAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<Guid> CreateArticleAsync(NewKnowledgeArticleDto article, CancellationToken cancellationToken);
+    Task<Guid> CreateArticleAsync(CreateArticleDto article, CancellationToken cancellationToken);
 
-    Task UpdateArticleAsync(Guid id, UpdateKnowledgeArticleDto article, CancellationToken cancellationToken);
+    Task UpdateArticleAsync(Guid id, UpdateArticleDto article, CancellationToken cancellationToken);
 
     Task DeleteArticleAsync(Guid id, CancellationToken cancellationToken);
 }

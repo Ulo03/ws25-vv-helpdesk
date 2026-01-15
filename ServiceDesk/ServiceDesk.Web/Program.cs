@@ -9,9 +9,19 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// UI Data clients (TODO: Patrick: Change from InMemnory to API calls)
-builder.Services.AddScoped<ITicketClient, InMemoryTicketClient>();
-builder.Services.AddScoped<IKnowledgeClient, InMemoryKnowledgeClient>();
+// UI Data clients old InMemnory:
+// builder.Services.AddScoped<ITicketClient, InMemoryTicketClient>();
+// builder.Services.AddScoped<IKnowledgeClient, InMemoryKnowledgeClient>();
+
+// UI Data clients new ApiCalls:
+builder.Services.AddHttpClient<ITicketClient, ApiTicketClient>(client =>
+{
+    client.BaseAddress = new Uri("https+http://servicedesk-apiservice");
+});
+builder.Services.AddHttpClient<IKnowledgeClient, ApiKnowledgeClient>(client =>
+{
+    client.BaseAddress = new Uri("https+http://servicedesk-apiservice");
+});
 
 // Health Check via Aspire Service Discovery
 builder.Services.AddHttpClient<IHealthClient, ApiHealthClient>(client =>
