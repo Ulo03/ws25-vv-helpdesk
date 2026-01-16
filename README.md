@@ -45,15 +45,9 @@ cd ServiceDesk/ServiceDesk.Data
 dotnet ef migrations add <MigrationName>
 ```
 
-### Migration auf die Datenbank anwenden
-```bash
-cd ServiceDesk/ServiceDesk.Data
-dotnet ef database update
-```
-
-**Hinweis:** Die PostgreSQL-Datenbank muss vor der Anwendung von Migrationen gestartet sein. Hierfür gibt es zwei Möglichkeiten:
-- Docker-Container manuell starten
-- Wechseln in `ServiceDesk.AppHost` und Aspire mit `dotnet run` ausführen.
+### Migration anwenden
+Aufgrund der Verwendung von Entity Framwework Core werden neue Migrationen über die  ```MigrateAsync()```-Methode bei jedem Start des ApiSerivices automatisch angewendet und erfodert keinen
+weiteren Eingriff.
 
 ## Git & CI/CD (GitLab)
 - **Workflow:** Feature-Branches und Merge Requests.
